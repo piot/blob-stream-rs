@@ -2,6 +2,9 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
+pub mod in_logic;
+pub mod protocol;
+
 use core::fmt;
 use std::error::Error;
 
@@ -21,8 +24,8 @@ pub enum BlobError {
 impl fmt::Display for BlobError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidChunkIndex(id, max) => {
-                write!(f, "illegal chunk index: {id} (max: {max})")
+            Self::InvalidChunkIndex(index, max) => {
+                write!(f, "illegal chunk index: {index} (max: {max})")
             }
             Self::UnexpectedChunkSize(expected, found, id) => write!(
                 f,
@@ -37,8 +40,29 @@ impl fmt::Display for BlobError {
 
 impl Error for BlobError {} // it implements Debug and Display
 
+use std::io;
+
+impl From<BlobError> for io::Error {
+    fn from(err: BlobError) -> Self {
+        match err {
+            // Map your custom error to an appropriate io::Error kind
+            BlobError::InvalidChunkIndex(_, _) => {
+                Self::new(io::ErrorKind::InvalidInput, err.to_string())
+            }
+            BlobError::OutOfBounds => Self::new(io::ErrorKind::UnexpectedEof, err.to_string()),
+            BlobError::RedundantSameContents(_) => {
+                Self::new(io::ErrorKind::AlreadyExists, err.to_string())
+            }
+            BlobError::RedundantContentDiffers(_) | BlobError::UnexpectedChunkSize(_, _, _) => {
+                Self::new(io::ErrorKind::InvalidData, err.to_string())
+            }
+        }
+    }
+}
+
 /// A struct representing a stream of binary data divided into fixed-size chunks.
 #[allow(unused)]
+#[derive(Debug)]
 pub struct BlobStreamIn {
     bit_array: BitArray,
     fixed_chunk_size: usize,
@@ -54,7 +78,7 @@ impl BlobStreamIn {
     /// - `fixed_chunk_size`: The size of each chunk in the stream.
     ///
     /// # Panics
-    /// Panics if `fixed_chunk_size` is zero.
+    /// Will panic if `fixed_chunk_size` is zero.
     ///
     /// # Returns
     /// A new `BlobStreamIn` instance.
@@ -128,7 +152,11 @@ impl BlobStreamIn {
 
         let expected_size = if chunk_index == chunk_count - 1 {
             // It was the last chunk
-            self.octet_count % self.fixed_chunk_size
+            if self.octet_count % self.fixed_chunk_size == 0 {
+                self.fixed_chunk_size
+            } else {
+                self.octet_count % self.fixed_chunk_size
+            }
         } else {
             self.fixed_chunk_size
         };
