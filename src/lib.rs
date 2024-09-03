@@ -3,7 +3,9 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 pub mod in_logic;
+pub mod in_logic_front;
 pub mod protocol;
+mod protocol_front;
 
 use core::fmt;
 use std::error::Error;

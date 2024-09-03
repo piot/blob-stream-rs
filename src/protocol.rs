@@ -4,26 +4,6 @@
  */
 use flood_rs::{ReadOctetStream, WriteOctetStream};
 use std::io;
-use std::io::ErrorKind;
-
-#[repr(u8)]
-enum SenderToReceiverCommand {
-    SetChunk = 0x01,
-}
-
-impl TryFrom<u8> for SenderToReceiverCommand {
-    type Error = io::Error;
-
-    fn try_from(value: u8) -> io::Result<Self> {
-        match value {
-            0x01 => Ok(Self::SetChunk),
-            _ => Err(io::Error::new(
-                ErrorKind::InvalidData,
-                format!("Unknown command {value}"),
-            )),
-        }
-    }
-}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SetChunkData {
@@ -61,65 +41,34 @@ impl SetChunkData {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TransferId(pub u16);
+
+impl TransferId {
+    /// # Errors
+    ///
+    /// This function will return an `io::Error` if there is an issue with writing to the stream.
+    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
+
+    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> io::Result<()> {
+        stream.write_u16(self.0)
+    }
+
+    /// # Errors
+    ///
+    /// This function will return an `io::Error` if there is an issue with writing to the stream.
+    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
+    pub fn from_stream(stream: &mut dyn ReadOctetStream) -> io::Result<Self> {
+        Ok(Self(stream.read_u16()?))
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum SenderToReceiverCommands {
     SetChunk(SetChunkData),
 }
 
-impl SenderToReceiverCommands {
-    #[must_use]
-    pub const fn to_octet(&self) -> u8 {
-        match self {
-            Self::SetChunk(_) => SenderToReceiverCommand::SetChunk as u8,
-        }
-    }
-
-    /// # Errors
-    ///
-    /// This function will return an `io::Error` if there is an issue with writing to the stream.
-    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
-
-    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> std::io::Result<()> {
-        stream.write_u8(self.to_octet())?;
-        match self {
-            Self::SetChunk(set_chunk_header) => set_chunk_header.to_stream(stream),
-        }
-    }
-
-    /// # Errors
-    ///
-    /// This function will return an `io::Error` if there is an issue with writing to the stream.
-    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
-    pub fn from_stream(stream: &mut dyn ReadOctetStream) -> std::io::Result<Self> {
-        let command_value = stream.read_u8()?;
-        let command = SenderToReceiverCommand::try_from(command_value)?;
-        let x = match command {
-            SenderToReceiverCommand::SetChunk => Self::SetChunk(SetChunkData::from_stream(stream)?),
-        };
-        Ok(x)
-    }
-}
-
 // ---------- Receiver
-
-#[repr(u8)]
-enum ReceiverToSenderCommand {
-    AckChunk = 0x02,
-}
-
-impl TryFrom<u8> for ReceiverToSenderCommand {
-    type Error = io::Error;
-
-    fn try_from(value: u8) -> io::Result<Self> {
-        match value {
-            0x02 => Ok(Self::AckChunk),
-            _ => Err(io::Error::new(
-                ErrorKind::InvalidData,
-                format!("Unknown command {value}"),
-            )),
-        }
-    }
-}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct AckChunkData {
@@ -150,27 +99,56 @@ impl AckChunkData {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum ReceiverToSenderCommands {
-    AckChunk(AckChunkData),
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct StartTransferData {
+    pub transfer_id: u16, // Unique transfer_id for this session
+    pub total_octet_size: u32,
+    pub chunk_size: u16,
 }
 
-impl ReceiverToSenderCommands {
-    #[must_use]
-    pub const fn to_octet(&self) -> u8 {
-        match self {
-            Self::AckChunk(_) => ReceiverToSenderCommand::AckChunk as u8,
-        }
+impl StartTransferData {
+    /// # Errors
+    ///
+    /// This function will return an `io::Error` if there is an issue with writing to the stream.
+    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> io::Result<()> {
+        stream.write_u16(self.transfer_id)?;
+        stream.write_u32(self.total_octet_size)?;
+        stream.write_u16(self.chunk_size)?;
+        Ok(())
     }
 
     /// # Errors
     ///
     /// This function will return an `io::Error` if there is an issue with writing to the stream.
     /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
-    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> io::Result<()> {
-        stream.write_u8(self.to_octet())?;
+    pub fn from_stream(stream: &mut dyn ReadOctetStream) -> io::Result<Self> {
+        let transfer_id = stream.read_u16()?;
+        let total_octet_size = stream.read_u32()?;
+        let chunk_size = stream.read_u16()?;
+
+        Ok(Self {
+            transfer_id,
+            total_octet_size,
+            chunk_size,
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ReceiverToSenderCommands {
+    AckChunk(AckChunkData),
+}
+
+impl ReceiverToSenderCommands {
+    /// # Errors
+    ///
+    /// This function will return an `io::Error` if there is an issue with writing to the stream.
+    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
+    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> std::io::Result<()> {
         match self {
-            Self::AckChunk(set_chunk_header) => set_chunk_header.to_stream(stream),
+            Self::AckChunk(ack_chunk_data) => ack_chunk_data.to_stream(stream),
         }
     }
 
@@ -179,11 +157,7 @@ impl ReceiverToSenderCommands {
     /// This function will return an `io::Error` if there is an issue with writing to the stream.
     /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
     pub fn from_stream(stream: &mut dyn ReadOctetStream) -> io::Result<Self> {
-        let command_value = stream.read_u8()?;
-        let command = ReceiverToSenderCommand::try_from(command_value)?;
-        let x = match command {
-            ReceiverToSenderCommand::AckChunk => Self::AckChunk(AckChunkData::from_stream(stream)?),
-        };
-        Ok(x)
+        let command = Self::AckChunk(AckChunkData::from_stream(stream)?);
+        Ok(command)
     }
 }
