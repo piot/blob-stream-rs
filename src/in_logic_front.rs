@@ -133,7 +133,7 @@ impl FrontLogic {
     ///
     /// # Returns
     ///
-    /// An `Option<&[u8]>` containing the full blob data if all chunks have been received,
+    /// An `Some(&[u8])` containing the full blob data if all chunks have been received,
     /// or `None` if the blob is incomplete.
     #[must_use]
     pub fn blob(&self) -> Option<&[u8]> {

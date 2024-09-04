@@ -7,6 +7,7 @@ pub mod err;
 pub mod in_logic;
 pub mod in_logic_front;
 pub mod in_stream;
+pub mod prelude;
 pub mod protocol;
 pub mod protocol_front;
 

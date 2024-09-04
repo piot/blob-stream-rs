@@ -2,11 +2,7 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use blob_stream::in_logic_front::FrontLogic;
-use blob_stream::protocol::{SetChunkData, StartTransferData, TransferId};
-use blob_stream::protocol_front::{
-    ReceiverToSenderFrontCommands, SenderToReceiverFrontCommands, SetChunkFrontData,
-};
+use blob_stream::prelude::*;
 
 #[test]
 fn start_transfer() {

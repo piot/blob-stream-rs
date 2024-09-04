@@ -51,7 +51,7 @@ impl Logic {
     ///
     /// # Errors
     ///
-    /// Returns an `io::Result<()>` if the chunk cannot be set due to an I/O error.
+    /// Returns an [`io::Error`] if the chunk cannot be set due to an I/O error.
     ///
     /// # Example
     ///
@@ -91,7 +91,7 @@ impl Logic {
     ///
     /// # Returns
     ///
-    /// An `Option<&[u8]>` containing the full blob data if all chunks have been received,
+    /// An `Some(&[u8])` containing the full blob data if all chunks have been received,
     /// or `None` if the blob is incomplete.
     ///
     /// # Example

@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use blob_stream::in_logic::Logic;
-use blob_stream::protocol::SetChunkData;
+use blob_stream::prelude::*;
 
 #[test]
 fn check_receive() {
