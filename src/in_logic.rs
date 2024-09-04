@@ -2,8 +2,9 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
+use crate::in_stream::BlobStreamIn;
 use crate::protocol::{AckChunkData, SetChunkData};
-use crate::{BlobStreamIn, ChunkIndex};
+use crate::ChunkIndex;
 use std::io;
 
 /// `Logic` handles the logic for receiving and processing chunks of data

@@ -2,7 +2,7 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use blob_stream::BlobStreamIn;
+use blob_stream::in_stream::BlobStreamIn;
 
 #[test]
 fn chunks_out_of_order() {

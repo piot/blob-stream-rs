@@ -37,7 +37,7 @@ impl SetChunkFrontData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SenderToReceiverFrontCommands {
     SetChunk(SetChunkFrontData),
     StartTransfer(StartTransferData),
@@ -126,7 +126,7 @@ impl TryFrom<u8> for ReceiverToSenderFrontCommand {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AckChunkFrontData {
     pub transfer_id: TransferId,
     pub data: AckChunkData,
@@ -155,7 +155,7 @@ impl AckChunkFrontData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ReceiverToSenderFrontCommands {
     AckChunk(AckChunkFrontData),
     AckStart(u16),

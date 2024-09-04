@@ -85,12 +85,12 @@ impl FrontLogic {
     ///     chunk_size: 256,
     /// });
     ///
-    /// let response = logic_front.update(start_command);
+    /// let response = logic_front.update(&start_command);
     /// assert!(response.is_ok());
     /// ```
     pub fn update(
         &mut self,
-        command: SenderToReceiverFrontCommands,
+        command: &SenderToReceiverFrontCommands,
     ) -> io::Result<ReceiverToSenderFrontCommands> {
         match command {
             SenderToReceiverFrontCommands::StartTransfer(start_transfer_data) => {
@@ -127,5 +127,10 @@ impl FrontLogic {
                 }
             }
         }
+    }
+
+    #[must_use]
+    pub fn blob(&self) -> Option<&[u8]> {
+        self.state.as_ref().and_then(|state| state.logic.blob())
     }
 }

@@ -41,7 +41,7 @@ impl SetChunkData {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct TransferId(pub u16);
 
 impl TransferId {
