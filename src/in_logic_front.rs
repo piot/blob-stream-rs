@@ -129,6 +129,12 @@ impl FrontLogic {
         }
     }
 
+    /// Retrieves the full blob data if all chunks have been received.
+    ///
+    /// # Returns
+    ///
+    /// An `Option<&[u8]>` containing the full blob data if all chunks have been received,
+    /// or `None` if the blob is incomplete.
     #[must_use]
     pub fn blob(&self) -> Option<&[u8]> {
         self.state.as_ref().and_then(|state| state.logic.blob())
