@@ -56,7 +56,11 @@ impl Logic {
             chunk_octet_size: self.in_stream.fixed_chunk_size,
             chunk_count: self.in_stream.bit_array.bit_count(),
             chunk_count_received: self.in_stream.bit_array.count_set_bits(),
-            waiting_for_chunk_index: self.in_stream.bit_array.first_unset_bit().unwrap_or(0),
+            waiting_for_chunk_index: self
+                .in_stream
+                .bit_array
+                .first_unset_bit()
+                .unwrap_or(self.in_stream.bit_array.bit_count()),
         }
     }
 
@@ -95,7 +99,7 @@ impl Logic {
             .in_stream
             .bit_array
             .first_unset_bit()
-            .unwrap_or_else(|| self.in_stream.bit_array.bit_count());
+            .unwrap_or(self.in_stream.bit_array.bit_count());
 
         let receive_mask = self
             .in_stream

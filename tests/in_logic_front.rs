@@ -128,6 +128,7 @@ fn complete_transfer() {
     assert_eq!(info_after_1.octet_count, 9);
     assert_eq!(info_after_1.fixed_chunk_size, 4);
     assert_eq!(info_after_1.chunk_count_received, 1);
+    assert_eq!(info_after_1.waiting_for_chunk_index, 0);
 
     set_chunk_and_check(
         &mut logic,
@@ -145,6 +146,7 @@ fn complete_transfer() {
     assert_eq!(info_after_0.octet_count, 9);
     assert_eq!(info_after_0.fixed_chunk_size, 4);
     assert_eq!(info_after_0.chunk_count_received, 2);
+    assert_eq!(info_after_0.waiting_for_chunk_index, 2);
 
     set_chunk_and_check(&mut logic, TRANSFER_ID_VALUE, 2, &[0x42], 3, 0b0);
 
@@ -154,4 +156,13 @@ fn complete_transfer() {
             .expect("blob should be ready after receiving three chunks"),
         &[0xba, 0xbc, 0xbd, 0xbe, 0xff, 0x11, 0xfe, 0x22, 0x42]
     );
+
+    let info_after_complete = logic
+        .info()
+        .expect("there should be info ready after a transfer being started");
+    assert_eq!(info_after_complete.transfer_id, TRANSFER_ID);
+    assert_eq!(info_after_complete.octet_count, 9);
+    assert_eq!(info_after_complete.fixed_chunk_size, 4);
+    assert_eq!(info_after_complete.chunk_count_received, 3);
+    assert_eq!(info_after_complete.waiting_for_chunk_index, 3);
 }
