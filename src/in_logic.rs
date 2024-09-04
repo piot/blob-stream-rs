@@ -6,16 +6,16 @@ use crate::protocol::{AckChunkData, SetChunkData};
 use crate::{BlobStreamIn, ChunkIndex};
 use std::io;
 
-/// `InLogic` handles the logic for receiving and processing chunks of data
+/// `Logic` handles the logic for receiving and processing chunks of data
 /// in a streaming context. It manages the internal state and interactions
 /// between the sender and receiver commands.
 #[derive(Debug)]
-pub struct InLogic {
+pub struct Logic {
     in_stream: BlobStreamIn,
 }
 
-impl InLogic {
-    /// Creates a new `InLogic` instance with the specified `octet_count` and `chunk_size`.
+impl Logic {
+    /// Creates a new `Logic` instance with the specified `octet_count` and `chunk_size`.
     ///
     /// # Arguments
     ///
@@ -24,13 +24,13 @@ impl InLogic {
     ///
     /// # Returns
     ///
-    /// A new `InLogic` instance.
+    /// A new `Logic` instance.
     ///
     /// # Example
     ///
     /// ```
-    /// use blob_stream::in_logic::InLogic;
-    /// let in_logic = InLogic::new(1024, 64);
+    /// use blob_stream::in_logic::Logic;
+    /// let in_logic = Logic::new(1024, 64);
     /// ```
     #[must_use]
     pub fn new(octet_count: usize, chunk_size: usize) -> Self {
@@ -55,10 +55,10 @@ impl InLogic {
     /// # Example
     ///
     /// ```
-    /// use blob_stream::in_logic::InLogic;
+    /// use blob_stream::in_logic::Logic;
     /// use blob_stream::protocol::{SetChunkData};
     ///
-    /// let mut in_logic = InLogic::new(1024, 5);
+    /// let mut in_logic = Logic::new(1024, 5);
     /// let chunk_data = SetChunkData {
     ///   chunk_index: 1,
     ///   payload: [0x8f, 0x23, 0x98, 0xfa, 0x99].into(),
@@ -96,8 +96,8 @@ impl InLogic {
     /// # Example
     ///
     /// ```
-    /// use blob_stream::in_logic::InLogic;
-    /// let mut in_logic = InLogic::new(1024, 64);
+    /// use blob_stream::in_logic::Logic;
+    /// let mut in_logic = Logic::new(1024, 64);
     /// if let Some(blob) = in_logic.blob() {
     ///     // Use the blob data
     /// }

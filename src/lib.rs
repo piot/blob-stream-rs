@@ -5,7 +5,7 @@
 pub mod in_logic;
 pub mod in_logic_front;
 pub mod protocol;
-mod protocol_front;
+pub mod protocol_front;
 
 use core::fmt;
 use std::error::Error;

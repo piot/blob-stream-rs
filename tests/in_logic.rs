@@ -2,12 +2,12 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use blob_stream::in_logic::InLogic;
+use blob_stream::in_logic::Logic;
 use blob_stream::protocol::SetChunkData;
 
 #[test]
 fn check_receive() {
-    let mut logic = InLogic::new(10, 5);
+    let mut logic = Logic::new(10, 5);
 
     let set_chunk_data = SetChunkData {
         chunk_index: 1,
@@ -24,7 +24,7 @@ fn check_receive() {
 
 #[test]
 fn multiple_not_received() {
-    let mut logic = InLogic::new(11, 5);
+    let mut logic = Logic::new(11, 5);
 
     let set_chunk_data = SetChunkData {
         chunk_index: 2,
@@ -40,7 +40,7 @@ fn multiple_not_received() {
 }
 
 fn set_chunk_and_check(
-    logic: &mut InLogic,
+    logic: &mut Logic,
     chunk_index: u32,
     payload: &[u8],
     waiting: u32,
@@ -57,7 +57,7 @@ fn set_chunk_and_check(
 
 #[test]
 fn all_received() {
-    let mut logic = InLogic::new(11, 5);
+    let mut logic = Logic::new(11, 5);
 
     set_chunk_and_check(&mut logic, 2, &[0x8f], 0, 0b10); // Verifies that chunk_index 2 was received (bit 1 = index 2, bit 0 = index 1)
     set_chunk_and_check(&mut logic, 0, &[0x33; 5], 1, 0b1); // Verifies that chunk_index 2 was received (bit 0 = index 2)
