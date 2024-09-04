@@ -10,7 +10,7 @@
 //! imports needed in your code.
 pub use {
     crate::err::BlobError,
-    crate::in_logic_front::FrontLogic,
+    crate::in_logic_front::{FrontLogic, Info},
     crate::protocol::{SetChunkData, StartTransferData, TransferId},
     crate::protocol_front::{
         ReceiverToSenderFrontCommands, SenderToReceiverFrontCommands, SetChunkFrontData,
