@@ -60,7 +60,7 @@ impl Logic {
                 .in_stream
                 .bit_array
                 .first_unset_bit()
-                .unwrap_or(self.in_stream.bit_array.bit_count()),
+                .unwrap_or_else(|| self.in_stream.bit_array.bit_count()),
         }
     }
 
@@ -99,7 +99,7 @@ impl Logic {
             .in_stream
             .bit_array
             .first_unset_bit()
-            .unwrap_or(self.in_stream.bit_array.bit_count());
+            .unwrap_or_else(|| self.in_stream.bit_array.bit_count());
 
         let receive_mask = self
             .in_stream
