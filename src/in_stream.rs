@@ -11,8 +11,8 @@ use bit_array_rs::BitArray;
 #[derive(Debug)]
 pub struct BlobStreamIn {
     pub(crate) bit_array: BitArray,
-    fixed_chunk_size: usize,
-    octet_count: usize,
+    pub(crate) fixed_chunk_size: usize,
+    pub(crate) octet_count: usize,
     blob: Vec<u8>,
 }
 

@@ -120,6 +120,15 @@ fn complete_transfer() {
         0,
         0b1,
     );
+
+    let info_after_1 = logic
+        .info()
+        .expect("there should be info ready after a transfer being started");
+    assert_eq!(info_after_1.transfer_id, TRANSFER_ID);
+    assert_eq!(info_after_1.octet_count, 9);
+    assert_eq!(info_after_1.fixed_chunk_size, 4);
+    assert_eq!(info_after_1.chunk_count_received, 1);
+
     set_chunk_and_check(
         &mut logic,
         TRANSFER_ID_VALUE,
@@ -128,6 +137,15 @@ fn complete_transfer() {
         2,
         0b0,
     );
+
+    let info_after_0 = logic
+        .info()
+        .expect("there should be info ready after a transfer being started");
+    assert_eq!(info_after_0.transfer_id, TRANSFER_ID);
+    assert_eq!(info_after_0.octet_count, 9);
+    assert_eq!(info_after_0.fixed_chunk_size, 4);
+    assert_eq!(info_after_0.chunk_count_received, 2);
+
     set_chunk_and_check(&mut logic, TRANSFER_ID_VALUE, 2, &[0x42], 3, 0b0);
 
     assert_eq!(

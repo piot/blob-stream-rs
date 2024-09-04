@@ -7,6 +7,15 @@ use crate::protocol::{AckChunkData, SetChunkData};
 use crate::ChunkIndex;
 use std::io;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct Info {
+    pub total_octet_size: usize,
+    pub chunk_octet_size: usize,
+    pub chunk_count: usize,
+    pub chunk_count_received: usize,
+    pub waiting_for_chunk_index: ChunkIndex,
+}
+
 /// `Logic` handles the logic for receiving and processing chunks of data
 /// in a streaming context. It manages the internal state and interactions
 /// between the sender and receiver commands.
@@ -37,6 +46,17 @@ impl Logic {
     pub fn new(octet_count: usize, chunk_size: usize) -> Self {
         Self {
             in_stream: BlobStreamIn::new(octet_count, chunk_size),
+        }
+    }
+
+    #[must_use]
+    pub fn info(&self) -> Info {
+        Info {
+            total_octet_size: self.in_stream.octet_count,
+            chunk_octet_size: self.in_stream.fixed_chunk_size,
+            chunk_count: self.in_stream.bit_array.bit_count(),
+            chunk_count_received: self.in_stream.bit_array.count_set_bits(),
+            waiting_for_chunk_index: self.in_stream.bit_array.first_unset_bit().unwrap_or(0),
         }
     }
 

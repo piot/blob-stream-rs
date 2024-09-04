@@ -7,8 +7,17 @@ use crate::protocol::TransferId;
 use crate::protocol_front::{
     AckChunkFrontData, ReceiverToSenderFrontCommands, SenderToReceiverFrontCommands,
 };
+use crate::ChunkIndex;
 use std::io;
 use std::io::ErrorKind;
+
+pub struct Info {
+    pub transfer_id: TransferId,
+    pub fixed_chunk_size: usize,
+    pub octet_count: usize,
+    pub chunk_count_received: usize,
+    pub waiting_for_chunk_index: ChunkIndex,
+}
 
 #[derive(Debug)]
 pub struct State {
@@ -138,5 +147,19 @@ impl FrontLogic {
     #[must_use]
     pub fn blob(&self) -> Option<&[u8]> {
         self.state.as_ref().and_then(|state| state.logic.blob())
+    }
+
+    #[must_use]
+    pub fn info(&self) -> Option<Info> {
+        self.state.as_ref().map(|s| {
+            let info = s.logic.info();
+            Info {
+                transfer_id: s.transfer_id,
+                fixed_chunk_size: info.chunk_octet_size,
+                octet_count: info.total_octet_size,
+                chunk_count_received: info.chunk_count_received,
+                waiting_for_chunk_index: info.waiting_for_chunk_index,
+            }
+        })
     }
 }
