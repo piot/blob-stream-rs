@@ -2,7 +2,7 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/blob-stream-rs
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use crate::protocol::{AckChunkData, ReceiverToSenderCommands, SenderToReceiverCommands};
+use crate::protocol::{AckChunkData, SetChunkData};
 use crate::{BlobStreamIn, ChunkIndex};
 use std::io;
 
@@ -56,45 +56,20 @@ impl InLogic {
     ///
     /// ```
     /// use blob_stream::in_logic::InLogic;
-    /// use blob_stream::protocol::{SenderToReceiverCommands, SetChunkData};
+    /// use blob_stream::protocol::{SetChunkData};
     ///
     /// let mut in_logic = InLogic::new(1024, 5);
     /// let chunk_data = SetChunkData {
     ///   chunk_index: 1,
     ///   payload: [0x8f, 0x23, 0x98, 0xfa, 0x99].into(),
     /// };
-    /// in_logic.receive(SenderToReceiverCommands::SetChunk(chunk_data)).unwrap();
+    /// in_logic.update(&chunk_data).unwrap();
     /// ```
-    pub fn receive(&mut self, command: SenderToReceiverCommands) -> io::Result<()> {
-        match command {
-            SenderToReceiverCommands::SetChunk(chunk_data) => {
-                self.in_stream
-                    .set_chunk(chunk_data.chunk_index as ChunkIndex, &chunk_data.payload)?;
-                Ok(())
-            }
-        }
-    }
-
-    /// Generates a `ReceiverToSenderCommands` command to acknowledge the received chunks.
-    ///
-    /// This function determines the next chunk index expected by the receiver and
-    /// generates a receive-mask indicating which chunks have been received.
-    ///
-    /// # Returns
-    ///
-    /// A `ReceiverToSenderCommands::AckChunk` containing the next expected chunk index
-    /// and the receive-mask for the subsequent chunks.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use blob_stream::in_logic::InLogic;
-    /// let mut in_logic = InLogic::new(1024, 64);
-    /// let ack_command = in_logic.send();
-    /// ```
-    #[must_use]
     #[allow(clippy::cast_possible_truncation)]
-    pub fn send(&self) -> ReceiverToSenderCommands {
+    pub fn update(&mut self, chunk_data: &SetChunkData) -> io::Result<AckChunkData> {
+        self.in_stream
+            .set_chunk(chunk_data.chunk_index as ChunkIndex, &chunk_data.payload)?;
+
         let waiting_for_chunk_index = self
             .in_stream
             .bit_array
@@ -105,11 +80,10 @@ impl InLogic {
             .in_stream
             .bit_array
             .atom_from_index(waiting_for_chunk_index + 1);
-        let ack_chunk_data = AckChunkData {
+        Ok(AckChunkData {
             waiting_for_chunk_index: waiting_for_chunk_index as u32,
             receive_mask_after_last: receive_mask,
-        };
-        ReceiverToSenderCommands::AckChunk(ack_chunk_data)
+        })
     }
 
     /// Retrieves the full blob data if all chunks have been received.

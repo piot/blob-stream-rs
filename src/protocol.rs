@@ -63,11 +63,6 @@ impl TransferId {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum SenderToReceiverCommands {
-    SetChunk(SetChunkData),
-}
-
 // ---------- Receiver
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -133,31 +128,5 @@ impl StartTransferData {
             total_octet_size,
             chunk_size,
         })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum ReceiverToSenderCommands {
-    AckChunk(AckChunkData),
-}
-
-impl ReceiverToSenderCommands {
-    /// # Errors
-    ///
-    /// This function will return an `io::Error` if there is an issue with writing to the stream.
-    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
-    pub fn to_stream(&self, stream: &mut dyn WriteOctetStream) -> std::io::Result<()> {
-        match self {
-            Self::AckChunk(ack_chunk_data) => ack_chunk_data.to_stream(stream),
-        }
-    }
-
-    /// # Errors
-    ///
-    /// This function will return an `io::Error` if there is an issue with writing to the stream.
-    /// This could happen if the stream is closed or if there are underlying I/O errors during the write operation.
-    pub fn from_stream(stream: &mut dyn ReadOctetStream) -> io::Result<Self> {
-        let command = Self::AckChunk(AckChunkData::from_stream(stream)?);
-        Ok(command)
     }
 }

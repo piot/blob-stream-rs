@@ -3,7 +3,6 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use crate::in_logic::InLogic;
-use crate::protocol::{ReceiverToSenderCommands, SenderToReceiverCommands, TransferId};
 use crate::protocol_front::{
     AckChunkFrontData, ReceiverToSenderFrontCommands, SenderToReceiverFrontCommands,
 };
@@ -52,7 +51,10 @@ impl InLogicFront {
     /// Returns an `io::Result<()>` if the chunk cannot be set due to an I/O error.
     ///
     /// # Example
-    pub fn receive(&mut self, command: SenderToReceiverFrontCommands) -> io::Result<()> {
+    pub fn update(
+        &mut self,
+        command: SenderToReceiverFrontCommands,
+    ) -> io::Result<ReceiverToSenderFrontCommands> {
         match command {
             SenderToReceiverFrontCommands::StartTransfer(start_transfer_data) => {
                 self.transfers
@@ -63,11 +65,17 @@ impl InLogicFront {
                             start_transfer_data.chunk_size as usize,
                         )
                     });
-                Ok(())
+                Ok(ReceiverToSenderFrontCommands::AckStart(
+                    start_transfer_data.transfer_id,
+                ))
             }
             SenderToReceiverFrontCommands::SetChunk(chunk_data) => {
                 if let Some(found) = self.transfers.get_mut(&chunk_data.transfer_id.0) {
-                    found.receive(SenderToReceiverCommands::SetChunk(chunk_data.data))
+                    let ack = found.update(&chunk_data.data)?;
+                    Ok(ReceiverToSenderFrontCommands::AckChunk(AckChunkFrontData {
+                        transfer_id: chunk_data.transfer_id,
+                        data: ack,
+                    }))
                 } else {
                     Err(io::Error::new(
                         ErrorKind::InvalidData,
@@ -76,41 +84,5 @@ impl InLogicFront {
                 }
             }
         }
-    }
-
-    /// Generates a `ReceiverToSenderCommands` command to acknowledge the received chunks.
-    ///
-    /// This function determines the next chunk index expected by the receiver and
-    /// generates a receive-mask indicating which chunks have been received.
-    ///
-    /// # Returns
-    ///
-    /// A `ReceiverToSenderCommands::AckChunk` containing the next expected chunk index
-    /// and the receive-mask for the subsequent chunks.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use blob_stream::in_logic_front::InLogicFront;
-    /// let mut in_logic = InLogicFront::new();
-    /// let ack_command = in_logic.send();
-    /// ```
-    #[must_use]
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn send(&self) -> Vec<ReceiverToSenderFrontCommands> {
-        let mut commands = Vec::new();
-        for (transfer_id, in_logic) in &self.transfers {
-            let receiver_to_front = in_logic.send();
-            match receiver_to_front {
-                ReceiverToSenderCommands::AckChunk(ack_chunk) => {
-                    let ack_chunk_front = AckChunkFrontData {
-                        transfer_id: TransferId(*transfer_id),
-                        data: ack_chunk,
-                    };
-                    commands.push(ReceiverToSenderFrontCommands::AckChunk(ack_chunk_front));
-                } // Handle other variants of ReceiverToSenderCommands if needed
-            }
-        }
-        commands
     }
 }
